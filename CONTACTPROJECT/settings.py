@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'CONTACTPROJECT.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Contactproj',
+        'NAME': 'contactproject',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',

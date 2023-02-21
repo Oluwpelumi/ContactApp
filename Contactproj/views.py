@@ -1,12 +1,59 @@
 from django.shortcuts import render, redirect
 from .models import Contact
+from django.contrib.auth.models import User, auth
 from django.contrib import messages
+from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 
 # Create your views here. 
 
 
+def signup(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        password2 = request.POST['password2']
+        
+        if password == password2:
+            if User.objects.filter(email=email).exists():
+                messages.info(request, 'Email Taken')
+                return redirect('signup')
+            elif User.objects.filter(username=username).exists():
+                messages.info(request, 'Username Taken')
+                return redirect('signup')
+            else:
+                user = User.objects.create_user(username=username, email=email, password=password)
+                user.save()
+                return redirect('signin')
+        else:
+            messages.info(request, 'Password Does Not Match')
+            return redirect('signup')
+    return render(request, 'signup.html')
 
+
+def signin(request):
+
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect('/')
+        else:
+            messages.info(request, 'Invalid Credentials')
+            return redirect('signin')
+
+    return render(request, 'signin.html')
+
+
+@login_required(login_url='signup')
 def index(request):
+    user_object = User.objects.get(username=request.user.username)
+    user_profile = Contact.objects.filter(user = user_object)
+
     contacts = Contact.objects.all()
     search_input = request.GET.get('search-area')
     if search_input:
@@ -20,15 +67,18 @@ def index(request):
 
 def AddContact(request):
     if request.method == 'POST':
-            full_name = request.POST['fullname']
-            relationship = request.POST['relationship']
-            phone_number = request.POST['phone-number']
-            email = request.POST['email']
-            address = request.POST['address']
+        full_name = request.POST['fullname']
+        relationship = request.POST['relationship']
+        phone_number = request.POST['phone-number']
+        email = request.POST['email']
+        address = request.POST['address']
 
-            new_contact = Contact.objects.create(full_name=full_name, relationship=relationship, phone_number=phone_number, email=email, address=address)
-            new_contact.save()
-            return redirect('/')
+        user_object = User.objects.get(username=request.user.username)
+        # user_profile = Contact.objects.get()
+        new_contact = Contact.objects.create(user = user_object, full_name=full_name, relationship=relationship, phone_number=phone_number, email=email, address=address)
+        new_contact.save() 
+        return redirect('/')
+        
 
     return render(request, 'new.html')
 
